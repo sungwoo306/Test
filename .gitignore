@@ -1,0 +1,6 @@
+cifar10/data/
+mnist/data/
+mnist/figures/
+mnist/results/
+cifar10/results/
+cifar10/figures/
