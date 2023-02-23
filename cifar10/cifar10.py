@@ -1,5 +1,4 @@
 #%%
-# Load and normalize CIFAR10
 ## Library import, set environment variables
 
 # Standard libraries
@@ -128,7 +127,7 @@ print(" ".join(f"{classes[labels[j]]:5s}" for j in range(batch_size)))
 net = ResNet18()
 
 #%%
-# Define optimizer
+## Define optimizer
 # **kwargs -> wild card argument 아무거나 들어갈 수 있음
 
 learning_rate = 0.001
@@ -140,19 +139,16 @@ func(1.0, momentum = 0.8, acceleration = 0.8)
 
 #%%
 def make_optimizer(
+        optimizer_class : Type[optim.Optimizer],
         model : nn.Module, 
-        optimizer_class : Type[optim.optimizer.Optimizer], 
         lr : float, 
         **kwargs
-        )->optim.optimizer.Optimizer:
+        )->optim.Optimizer:
     optimizer = optimizer_class(model.parameters(), lr=lr, **kwargs)
     return optimizer
 
 optimizer = make_optimizer(optim.SGD, net, lr=learning_rate, momentum=momentum)
 # m_optimizer = make_optimizer(optim.SGD, m_net, learning_rate, momentum=momentum)
-
-net = Net() # nn.Module
-Net : Type[Net]/ Type[nn.Module]
 
 #%%
 
@@ -162,7 +158,7 @@ Net : Type[Net]/ Type[nn.Module]
 # Train helper functions
 def train_epoch(
         model : nn.Module, 
-        optimizer : optim.optimizer.Optimizer, 
+        optimizer : optim.Optimizer, 
         train_dataloader : DataLoader
         )->torch.Tensor:
     
@@ -218,7 +214,7 @@ net = net.to(device)
 train_losses = []
 # test_epoch()
 for epoch in range(max_epochs):
-    train_loss = train_epoch(epoch)
+    train_loss = train_epoch(net, optimizer, trainloader)
     train_losses.append(train_loss)
     if epoch % logger_interval == 0:
         print(
