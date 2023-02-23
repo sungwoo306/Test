@@ -1,29 +1,49 @@
 #%%
-
 # Load and normalize CIFAR10
+## Library import, set environment variables
+
+# Standard libraries
+import os
+import random
+from typing import Type
+import time
+
+# Third-party libraries
+import numpy as np
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
+import torch.optim as optim
 from torchvision.datasets import CIFAR10
 import torchvision.transforms as transforms
-import random
-import numpy as np
-import os
+from torchvision.utils import make_grid
+import matplotlib.pyplot as plt
 
-batch_size = 32
-loger_interval = 320
+
+# Custom libraries
+from models.resnet import ResNet18, M_ResNet18
+from models.convnet import Net, NewActivationNet
+# .은 현재폴더를 의미 / __init__.py를 만들어야 인식을 할 수 있음
+
 random_seed = 113
-
 os.environ["PYTHONHASHSEED"] = str(random_seed)
 random.seed(random_seed)
 np.random.seed(random_seed)
-torch.backends.cudnn.enabled = False
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
 torch.manual_seed(random_seed)
+
+# cudnn -> libraries(nvdia, cuda랑 cudnn으로 학습)
+torch.backends.cudnn.enabled = False
+torch.backends.cudnn.deterministic = True 
+# 이건 알아야함. 수치연산의 값이 매번 정확하게 같이 나오는게 아니고 되게 작은 torelence안에서 값이 나오게 하면 조금 흔들릴 수 있는데, true라고 하면 아예 같은 결과를 나오게 할 수 있다.
+torch.backends.cudnn.benchmark = False
+
 device = "cuda" if torch.cuda.is_available() else "cpu"
 # if device == "cuda":
 #     torch.cuda.manual_seed_all(random_seed)  # if use multi-GPU
 
+#%%
+## Define dataset, make dataloaders
 transform = transforms.Compose(
     [
         transforms.ToTensor(),
@@ -34,21 +54,24 @@ transform = transforms.Compose(
 )
 
 trainset = CIFAR10(root="./data", train=True, download=False, transform=transform)
+testset = CIFAR10(root="./data", train=False, download=False, transform=transform)
+
+batch_size = 32
 trainloader = DataLoader(
     trainset,
     batch_size=batch_size,
     shuffle=True,
-    num_workers=2,
+    num_workers=0,
 )
 
-testset = CIFAR10(root="./data", train=False, download=False, transform=transform)
 testloader = DataLoader(
     testset,
     batch_size=batch_size,
     shuffle=False,
-    num_workers=2,
+    num_workers=0,
 )
-
+#%%
+## Inspect dataset before training
 classes = (
     "plane",
     "car",
@@ -61,236 +84,108 @@ classes = (
     "ship",
     "truck",
 )
-#%%
+
 print(type(trainset), len(trainset), len(testset))
 print(type(trainset[0]), len(trainset[0]))
 print(len(trainset[0][0]))
 print(len(trainset[0][0][0]))
 print(len(trainset[0][0][0][0]))
+
 image, label = trainset[0]
 print(type(image), type(label))
 print(image.shape, label)
+
 class_items = trainset.classes
 print(type(class_items), len(class_items))
 print(class_items)
 print(class_items[label])
-#%%
-import matplotlib.pyplot as plt
 
 plt.imshow(image.permute(1, 2, 0))
 # %%
-import matplotlib.pyplot as plt
-from torchvision.utils import make_grid
+## Plot first batch from the train dataloader
+# get some random training images
+dataiter = iter(trainloader)
+images, labels = next(dataiter)
 
 # functions to show an image
-
-
 def imshow(img):
     img = img / 5 + 0.5  # unnormalize
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1, 2, 0)))
     plt.show()
-
-
-# get some random training images
-dataiter = iter(trainloader)
-images, labels = next(dataiter)
+# image가 안나옴
 
 # show images
 imshow(make_grid(images))
 # print labels
 print(" ".join(f"{classes[labels[j]]:5s}" for j in range(batch_size)))
 #%%
-#
-# Not use this model, instead using RNN18 below
-#
-import torch.nn as nn
-import torch.nn.functional as F
-from activations.activations import molu
-
-# Define a convolutional neural network
-class Net(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
-
-    def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = torch.flatten(x, 1)  # flatten all dimensions except batch
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
-
-class NewActivationNet(nn.Module):
-    def __init__(self):
-        super().__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
-
-    def forward(self, x):
-        x = self.pool(molu(self.conv1(x)))
-        x = self.pool(molu(self.conv2(x)))
-        x = torch.flatten(x, 1)  # flatten all dimensions except batch
-        x = molu(self.fc1(x))
-        x = molu(self.fc2(x))
-        x = self.fc3(x)
-        return x
-
-
+# Define model
+# m_net = M_ResNet18()
 # net = Net()
 # new_net = NewActivationNet()
-#%%
-import torch
-
-# x -> L(x)
-# x <- x-lr*D_x(L)
-
-a = torch.tensor([1.0, 2.0, 3.0], requires_grad=True)
-b = torch.tensor([1.0, 2.0, 3.0])
-print(a)
-print(b)
-#%%
-a2 = a**2
-b2 = b**2
-print(a2)
-print(b2)
-#%%
-a_loss = torch.sum(a2)
-b_loss = torch.sum(b2)
-print(a_loss)
-print(b_loss)
-#%%
-print(a.grad)
-a_loss.backward()
-print(a.grad)
-#%%
-lr = 0.01
-a = a - lr * a.grad
-#%%
-from torch.optim import SGD
-
-optimizer = SGD([a], lr=0.01)
-optimizer.step()
-#%%
-net = Net()
-optimizer = SGD(net.parameters(), lr=0.01)
-optimizer
-#%%
-print(a.grad)
-optimizer.zero_grad()
-print(a.grad)
-#%%
-import torch.nn.functional as F
-from models.resnet import ResNet18, M_ResNet18
-import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint
-from pytorch_lightning.loggers import WandbLogger
-import wandb
-
-
-class ResNetWrapper(pl.Lightningmodule):
-    def __init__(self, lr=0.01):
-        self.model = ResNet18()
-        self.lr = lr
-
-    def forward(self, x):
-        return self.model(x)
-
-    def training_step(self, batch, batch_idx):
-        train_loss = self.common_step(batch, batch_idx)
-        self.log("train_loss", train_loss)
-        return train_loss
-
-    def validation_step(self, batch, batch_idx):
-        val_loss = self.common_step(batch, batch_idx)
-        self.log("validation_loss", val_loss)
-        return val_loss
-
-    def test_step(self, batch, batch_idx):
-        test_loss = self.common_step(batch, batch_idx)
-        self.log("test_loss", test_loss)
-        return test_loss
-
-    def common_step(self, batch, batch_idx):
-        img, label = batch
-        label_pred = self.model(img)
-        loss = F.nll_loss(label_pred, label)
-        return loss
-
-    def configure_optimizers(self):
-        return SGD(self.model.parameters(), lr=self.lr)
-
-
-lightning_model = ResNetWrapper()
-logger = WandbLogger(project=None, entity=None)
-trainer = pl.Trainer(callbacks=[], logger=logger)
-#%%
-trainer.fit(lightning_model, train_dataloaders=trainloader, val_dataloaders=valloader)
-#%%
-# Define a loss function and optimizer
-import torch.optim as optim
-
-epochs = 3
-learning_rate = 0.001
-momentum = 0.9
 
 net = ResNet18()
-net = net.to(device)
-optimizer = optim.SGD(net.parameters(), lr=learning_rate, momentum=momentum)
 
-m_net = M_ResNet18()
-m_net = m_net.to(device)
-m_optimizer = optim.SGD(m_net.parameters(), lr=learning_rate, momentum=momentum)
 #%%
-train_losses = []
-train_counter = []
-test_losses = []
-test_counter = [i * len(trainloader.dataset) for i in range(epochs + 1)]
-corrects = []
-correct_pred = {classname: 0 for classname in classes}
-total_pred = {classname: 0 for classname in classes}
+# Define optimizer
+# **kwargs -> wild card argument 아무거나 들어갈 수 있음
 
+learning_rate = 0.001
+momentum = 0.9
+def func(a, **kwargs):
+    print(kwargs)
+    return a
+func(1.0, momentum = 0.8, acceleration = 0.8)
 
-m_train_losses = []
-m_train_counter = []
-m_test_losses = []
-m_test_counter = [i * len(trainloader.dataset) for i in range(epochs + 1)]
-m_corrects = []
+#%%
+def make_optimizer(
+        model : nn.Module, 
+        optimizer_class : Type[optim.optimizer.Optimizer], 
+        lr : float, 
+        **kwargs
+        )->optim.optimizer.Optimizer:
+    optimizer = optimizer_class(model.parameters(), lr=lr, **kwargs)
+    return optimizer
 
+optimizer = make_optimizer(optim.SGD, net, lr=learning_rate, momentum=momentum)
+# m_optimizer = make_optimizer(optim.SGD, m_net, learning_rate, momentum=momentum)
 
-def train(epoch):
-    net.train()
+net = Net() # nn.Module
+Net : Type[Net]/ Type[nn.Module]
+
+#%%
+
+# m_net = m_net.to(device)
+
+#%%
+# Train helper functions
+def train_epoch(
+        model : nn.Module, 
+        optimizer : optim.optimizer.Optimizer, 
+        train_dataloader : DataLoader
+        )->torch.Tensor:
+    
+    model.train()
     train_loss = 0
-    for batch_idx, (input, label) in enumerate(trainloader):
+    for image, label in train_dataloader:
         # get the inputs; data is a list of [inputs, labels]
-        input, label = input.to(device), label.to(device)
+        image, label = image.to(device), label.to(device)
 
-        optimizer.zero_grad()
+        optimizer.zero_grad() # clear derivative information from previous loop
 
         # forward + backward + optimize
-        output = net(input)
-        loss = F.nll_loss(output, label)
-        loss.backward()
-        optimizer.step()
-
-        # print statistics
-        train_loss += loss.item()
+        label_pred = model(image) # obtain model prediction 
+        loss_minibatch = F.nll_loss(label_pred, label) # calculate mimibatch loss
+        loss_minibatch.backward() # signal end of computation graph, calculate derivatives
+        optimizer.step() # update leaf tensors using update rule(sgd: x <- x-lr*D_x_L)
+        
+        # add minibath contribution to the total epoch loss
+        train_loss += loss_minibatch.item()
     return train_loss
 
 
-def test():
+def test_epoch(model, optimizer, dataloader):
     net.eval()
     test_loss = 0
     correct = 0
@@ -313,8 +208,49 @@ def test():
     print(
         f"Test set: Avg. loss: {test_loss:.4f}, Accuracy: {100.0 * correct / len(testloader.dataset):.2f}%"
     )
+#%%
+## Run training loop
+max_epochs = 3
+logger_interval = 1
+start_time = time.time()
+
+net = net.to(device)
+train_losses = []
+# test_epoch()
+for epoch in range(max_epochs):
+    train_loss = train_epoch(epoch)
+    train_losses.append(train_loss)
+    if epoch % logger_interval == 0:
+        print(
+            f"Train Epoch:{epoch}, loss: {train_loss:.4f}"
+        )
+        # torch.save(net.state_dict(), "./results/cifar_net.pth")
+        # torch.save(optimizer.state_dict(), "./results/cifar_net.pth")
+
+    test_epoch()  # loop over the dataset multiple times
+
+total_time = time.time() - start_time
+print(f" Duration: {total_time/60} mins")
+
+#%%
+train_counter = []
+test_losses = []
+test_counter = [i * len(trainloader.dataset) for i in range(max_epochs + 1)]
+corrects = []
+correct_pred = {classname: 0 for classname in classes}
+total_pred = {classname: 0 for classname in classes}
 
 
+m_train_losses = []
+m_train_counter = []
+m_test_losses = []
+m_test_counter = [i * len(trainloader.dataset) for i in range(max_epochs + 1)]
+m_corrects = []
+
+
+
+
+#%%
 def m_train(epoch):
     m_net.train()
     m_train_loss = 0
@@ -360,32 +296,14 @@ def m_test():
 
 
 #%%
-import time
-
-start_time = time.time()
-test()
-for epoch in range(1, epochs + 1):
-    train_loss = train(epoch)
-    if epoch % loger_interval == loger_interval - 1:
-        train_losses.append(train_loss)
-        print(
-            f"Train Epoch:{epoch}, batch index:{batch_idx + 1}, loss: {train_loss / loger_interval:.4f}"
-        )
-        torch.save(net.state_dict(), "./results/cifar_net.pth")
-        torch.save(optimizer.state_dict(), "./results/cifar_net.pth")
-
-    test()  # loop over the dataset multiple times
-
-total_time = time.time() - start_time
-print(f" Duration: {total_time/60} mins")
 
 # batch 32
-# 3 epochs
+# 3 max_epochs
 # Test set: Avg. loss: 0.9021, Accuracy: 68.01%
 # Test set: Avg. loss: 0.7579, Accuracy: 73.94%
 # Test set: Avg. loss: 0.6791, Accuracy: 76.80%
 
-# 10 epochs
+# 10 max_epochs
 # Test set: Avg. loss: 0.9021, Accuracy: 68.01%
 # Test set: Avg. loss: 0.7579, Accuracy: 73.94%
 # Test set: Avg. loss: 0.6791, Accuracy: 76.80%
@@ -398,7 +316,7 @@ print(f" Duration: {total_time/60} mins")
 # Test set: Avg. loss: 0.7859, Accuracy: 81.13%
 
 # batch 64
-# 3 epochs
+# 3 max_epochs
 # Test set: Avg. loss: 1.0751, Accuracy: 61.89%
 # Test set: Avg. loss: 0.8413, Accuracy: 70.10%
 # Test set: Avg. loss: 0.7413, Accuracy: 74.27%
@@ -438,7 +356,7 @@ import time
 
 start_time = time.time()
 m_test()
-for epoch in range(1, epochs + 1):
+for epoch in range(1, max_epochs + 1):
     m_train(epoch)
     m_test()
 
@@ -446,14 +364,14 @@ total_time = time.time() - start_time
 print(f" Duration: {total_time/60} mins")
 
 # 32 batch
-# 4 epochs
+# 4 max_epochs
 # 1, 1
 # Test set: Avg. loss: 0.8627, Accuracy: 68.98%
 # Test set: Avg. loss: 0.7092, Accuracy: 75.53%
 # Test set: Avg. loss: 0.6331, Accuracy: 78.26%
 # Test set: Avg. loss: 0.7129, Accuracy: 77.30%
 
-# 10 epochs
+# 10 max_epochs
 # Test set: Avg. loss: 0.8627, Accuracy: 68.98%
 # Test set: Avg. loss: 0.7092, Accuracy: 75.53%
 # Test set: Avg. loss: 0.6331, Accuracy: 78.26%
@@ -563,7 +481,7 @@ print("GroundTruth: ", " ".join(f"{classes[labels[j]]:5s}" for j in range(32)))
 #     f"Accuracy of the network on the 10000 test images: {100 * correct // total} %"
 # )
 
-# # 3 epochs
+# # 3 max_epochs
 # # 2, 2, Accuracy of the network on the 10000 test images: 61 %
 
 # %%
@@ -589,7 +507,7 @@ for classname, correct_count in correct_pred.items():
     accuracy = 100 * float(correct_count) / total_pred[classname]
     print(f"Accuracy for class: {classname:5s} is {accuracy:.2f} %")
 # 32 batch
-# 4 epochs
+# 4 max_epochs
 # Accuracy for class: plane is 84.40 %
 # Accuracy for class: car   is 89.50 %
 # Accuracy for class: bird  is 76.50 %
@@ -602,7 +520,7 @@ for classname, correct_count in correct_pred.items():
 # Accuracy for class: truck is 89.10 %
 
 # 64 batch
-# 3 epochs
+# 3 max_epochs
 # Accuracy for class: plane is 81.60 %
 # Accuracy for class: car   is 89.60 %
 # Accuracy for class: bird  is 59.20 %
@@ -637,7 +555,7 @@ for classname, correct_count in correct_pred.items():
     accuracy = 100 * float(correct_count) / total_pred[classname]
     print(f"Accuracy for class: {classname:5s} is {accuracy:.2f} %")
 
-# 4 epochs
+# 4 max_epochs
 # Accuracy for class: plane is 83.10 %
 # Accuracy for class: car   is 94.20 %
 # Accuracy for class: bird  is 61.90 %
@@ -649,7 +567,7 @@ for classname, correct_count in correct_pred.items():
 # Accuracy for class: ship  is 87.40 %
 # Accuracy for class: truck is 87.80 %
 
-# 10 epochs
+# 10 max_epochs
 # Accuracy for class: plane is 85.20 %
 # Accuracy for class: car   is 94.00 %
 # Accuracy for class: bird  is 73.40 %
