@@ -1,0 +1,42 @@
+{
+    "os": "macOS-13.2.1-x86_64-i386-64bit",
+    "python": "3.10.8",
+    "heartbeatAt": "2023-02-27T08:25:04.571288",
+    "startedAt": "2023-02-27T08:25:03.175851",
+    "docker": null,
+    "cuda": null,
+    "args": null,
+    "state": "running",
+    "program": "/Users/paul/Desktop/JHElab/Project/Test/cifar10/cifar10_lightning.py",
+    "codePath": "cifar10/cifar10_lightning.py",
+    "git": {
+        "remote": "git@github.com:sungwoo306/Test.git",
+        "commit": "a20b454f2ad2280be1e00a722bf05f07471af920"
+    },
+    "email": null,
+    "root": "/Users/paul/Desktop/JHElab/Project/Test",
+    "host": "Pauls-MacBookPro.local",
+    "username": "paul",
+    "executable": "/Users/paul/opt/miniconda3/envs/qtc/bin/python",
+    "cpu_count": 4,
+    "cpu_count_logical": 8,
+    "cpu_freq": {
+        "current": 2000,
+        "min": 2000,
+        "max": 2000
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2000,
+            "min": 2000,
+            "max": 2000
+        }
+    ],
+    "disk": {
+        "total": 465.62699127197266,
+        "used": 430.38705825805664
+    },
+    "memory": {
+        "total": 16.0
+    }
+}

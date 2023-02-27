@@ -164,8 +164,9 @@ def train_epoch(
     
     model.train()
     train_loss = 0
-    for image, label in train_dataloader:
+    for batch in train_dataloader:
         # get the inputs; data is a list of [inputs, labels]
+        image, label = batch
         image, label = image.to(device), label.to(device)
 
         optimizer.zero_grad() # clear derivative information from previous loop
