@@ -104,6 +104,8 @@ trainer = pl.Trainer(
     auto_select_gpus = True, # GPU가 여러 장 있는 경우, 무슨 gpu를 사용할 건지에 대한 내용(무슨 GPU인지는 알아서 찾아감)
     deterministic = "warn", # True(같은결과), False(빠르게), warn 가급적 deterministic하게 하고 안되면 경고를 띄워줘라. warn을 놓는걸 권장. 
     callbacks = [ckpt_best],
+    logger = logger,
+    log_every_n_steps = 1,
 )
 #%%
 lightning_model = ResNetWrapperBasic()
