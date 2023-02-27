@@ -98,10 +98,10 @@ torch.backends.cudnn.benchmark = True
 ckpt_best = ModelCheckpoint(monitor="train_loss", save_top_k = 1, mode="min") # 전체학습이 되는 전 구간 중에 loss가 가장 낮은 epoch에 해당하는 모델을 save하는 것. save top k model, based on the monitered metric
 logger = WandbLogger(project="cifar10_test", entity="jhelab_team")
 trainer = pl.Trainer(
-    max_epochs = 3, # max_epochs을 안써놓으면 default가 있거나 계속 돔.
-    accelerator = "cpu", # 학습하고자 하는 프로세스의 종류
+    max_epochs = 10, # max_epochs을 안써놓으면 default가 있거나 계속 돔.
+    accelerator = "gpu", # 학습하고자 하는 프로세스의 종류
     devices = 1, # multi 장치학습 -> 동시에 여러 개를 써서 학습하는 것(CPU, GPU, TPU etc..)
-    auto_select_gpus = True, # GPU가 여러 장 있는 경우, 무슨 gpu를 사용할 건지에 대한 내용(무슨 GPU인지는 알아서 찾아감)
+    # auto_select_gpus = True, # GPU가 여러 장 있는 경우, 무슨 gpu를 사용할 건지에 대한 내용(무슨 GPU인지는 알아서 찾아감)
     deterministic = "warn", # True(같은결과), False(빠르게), warn 가급적 deterministic하게 하고 안되면 경고를 띄워줘라. warn을 놓는걸 권장. 
     callbacks = [ckpt_best],
     logger = logger,
@@ -109,7 +109,7 @@ trainer = pl.Trainer(
 )
 #%%
 lightning_model = ResNetWrapperBasic()
-trainer.fit(lightning_model, train_dataloaders=train_loader_mnist, val_dataloaders=train_loader_mnist)
+trainer.fit(lightning_model, train_dataloaders=trainloader)
 
 #%%
 # with statement example

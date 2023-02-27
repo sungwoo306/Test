@@ -1,0 +1,144 @@
+{
+    "os": "Linux-5.15.79.1-microsoft-standard-WSL2-x86_64-with-glibc2.35",
+    "python": "3.10.8",
+    "heartbeatAt": "2023-02-27T08:48:14.725627",
+    "startedAt": "2023-02-27T08:48:13.479026",
+    "docker": null,
+    "cuda": null,
+    "args": null,
+    "state": "running",
+    "program": "/home/paul/Projects/Test/cifar10/cifar10_lightning.py",
+    "git": {
+        "remote": "git@github.com:sungwoo306/Test.git",
+        "commit": "3b77b63f41f1fa18178a9952305cc202cff16a07"
+    },
+    "email": "paul306@snu.ac.kr",
+    "root": "/mnt/c/Users/\ud64d\uc131\uc6b0/Desktop/Projects/Test",
+    "host": "DESKTOP-ILAR16V",
+    "username": "paul",
+    "executable": "/home/paul/mambaforge/envs/qtc/bin/python",
+    "cpu_count": 10,
+    "cpu_count_logical": 20,
+    "cpu_freq": {
+        "current": 2111.998999999999,
+        "min": 0.0,
+        "max": 0.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2111.999,
+            "min": 0.0,
+            "max": 0.0
+        }
+    ],
+    "disk": {
+        "total": 1006.853931427002,
+        "used": 20.782577514648438
+    },
+    "gpu": "NVIDIA GeForce RTX 3070 Ti",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA GeForce RTX 3070 Ti",
+            "memory_total": 8589934592
+        }
+    ],
+    "memory": {
+        "total": 7.672222137451172
+    }
+}
