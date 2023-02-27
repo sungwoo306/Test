@@ -12,7 +12,7 @@ import wandb
 from models.resnet import ResNet18, M_ResNet18
 
 random_seed = 113
-pl.seed_everything(random_seed)
+pl.seed_everything(random_seed) # pytorch에서 random seed 넣는 네 줄을 알아서 처리해줌
 #%%
 transform = transforms.Compose(
     [
@@ -41,8 +41,9 @@ testloader = DataLoader(
     num_workers=0,
 )
 #%%
-class ResNetWrapper(pl.Lightningmodule):
+class ResNetWrapperBasic(pl.LightningModule):
     def __init__(self, lr=0.01):
+        super().__init__()
         self.model = ResNet18()
         self.lr = lr
 
@@ -50,32 +51,37 @@ class ResNetWrapper(pl.Lightningmodule):
         return self.model(x)
 
     def training_step(self, batch, batch_idx):
+        image, label = batch
         train_loss = self.common_step(batch, batch_idx)
-        self.log("train_loss", train_loss)
+        # self.log("train_loss", train_loss)
         return train_loss
 
-    def validation_step(self, batch, batch_idx):
-        val_loss = self.common_step(batch, batch_idx)
-        self.log("validation_loss", val_loss)
-        return val_loss
+    # training step zero grad backward step이 loss를 epoch 당 코드를 짜서 for loop에 돌리도록 했는데,
 
-    def test_step(self, batch, batch_idx):
-        test_loss = self.common_step(batch, batch_idx)
-        self.log("test_loss", test_loss)
-        return test_loss
+    # lightning에서는 알아서 자동으로 채워줘서 loss 합까지 해줌
 
     def common_step(self, batch, batch_idx):
-        img, label = batch
-        label_pred = self.model(img)
+        image, label = batch
+        label_pred = self.model(image)
         loss = F.nll_loss(label_pred, label)
         return loss
 
     def configure_optimizers(self):
-        return SGD(self.model.parameters(), lr=self.lr)
+        return optim.SGD(self.model.parameters(), lr=self.lr)
+#%%
+lightning_model = ResNetWrapperBasic()
+trainer = pl.Trainer(
+    accelerator = "cpu", # 학습하고자 하는 프로세스의 종류
+    devices = 1, # multi 장치학습 -> 동시에 여러 개를 써서 학습하는 것(CPU, GPU, TPU etc..)
+    auto_select_grups = True, # GPU가 여러 장 있는 경우, 무슨 gpu를 사용할 건지에 대한 내용(무슨 GPU인지는 알아서 찾아감)
+    deterministic = "warn", # True(같은결과), False(빠르게), warn 가급적 deterministic하게 하고 안되면 경고를 띄워줘라. warn을 놓는걸 권장. 
+)
+#%%
 
 
-lightning_model = ResNetWrapper()
+
 logger = WandbLogger(project=None, entity=None)
+ckpt_callback = ModelCheckpoint(mo)
 trainer = pl.Trainer(callbacks=[], logger=logger)
 #%%
 trainer.fit(lightning_model, train_dataloaders=trainloader, val_dataloaders=valloader)

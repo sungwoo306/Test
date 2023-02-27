@@ -26,10 +26,10 @@ torch.manual_seed(random_seed)
 
 
 mnist_trainsets = datasets.MNIST(
-    root="./data", train=True, download=False, transform=None
+    root="./data", train=True, download=True, transform=None
 )
 mnist_testset = datasets.MNIST(
-    root="./data", train=False, download=False, transform=None
+    root="./data", train=False, download=True, transform=None
 )
 train_loader = DataLoader(
     datasets.MNIST(
