@@ -8,7 +8,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import WandbLogger
 
-from models.resnet import ResNet18, M_ResNet18
+from models.resnet import ResNet18, M_ResNet18, ResNet, BasicBlock
 
 random_seed = 113
 pl.seed_everything(random_seed) # pytorch에서 random seed 넣는 네 줄을 알아서 처리해줌
@@ -61,7 +61,7 @@ train_loader_mnist = DataLoader(
 class ResNetWrapperBasic(pl.LightningModule):
     def __init__(self, lr=0.01):
         super().__init__()
-        self.model = ResNet18()
+        self.model = ResNet(BasicBlock, [1, 1, 1, 1])
         self.lr = lr
 
     def forward(self, x):
@@ -107,7 +107,7 @@ trainer = pl.Trainer(
 )
 #%%
 lightning_model = ResNetWrapperBasic()
-trainer.fit(lightning_model, train_dataloaders=mnist_train, val_dataloaders=mnist_train)
+trainer.fit(lightning_model, train_dataloaders=train_loader_mnist, val_dataloaders=train_loader_mnist)
 
 #%%
 # with statement example
